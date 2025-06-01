@@ -63,10 +63,10 @@ public class SummonerService implements ISummonerService {
     }
 
     @Override
-    public List<ChampionDto> getChampionUsage(Region region, String gameName, String tagLine) {
+    public List<ChampionDto> getChampionUsage(Region region, String gameName, String tagLine, int count) {
         AccountDto account = getAccountDtoByRiotId(region, gameName, tagLine);
         String puuid = account.getPuuid();
-        List<String> matchIds = getMatchIdsByPuuid(region, puuid, 0, 20);
+        List<String> matchIds = getMatchIdsByPuuid(region, puuid, 0, count);
 
         // Flatten all relevant participants
         List<ParticipantDto> participants = matchIds.stream()
@@ -85,11 +85,11 @@ public class SummonerService implements ISummonerService {
             .map(entry -> {
                 String champId = entry.getKey();
                 List<ParticipantDto> plist = entry.getValue();
-                int count = plist.size();
+                int matchCount = plist.size();
                 ChampionDto dto = new ChampionDto();
                 dto.setChampionId(champId);
                 dto.setChampionName(plist.getFirst().getChampionName());
-                dto.setCount(count);
+                dto.setCount(matchCount);
                 dto.setAvgKills(plist.stream().mapToInt(ParticipantDto::getKills).average().orElse(0));
                 dto.setAvgDeaths(plist.stream().mapToInt(ParticipantDto::getDeaths).average().orElse(0));
                 dto.setAvgAssists(plist.stream().mapToInt(ParticipantDto::getAssists).average().orElse(0));

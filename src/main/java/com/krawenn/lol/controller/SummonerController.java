@@ -36,8 +36,9 @@ public class SummonerController {
     public ResponseEntity<List<ChampionDto>> getChampionUsage(
             @PathVariable Region region,
             @PathVariable String gameName,
-            @PathVariable String tagLine) {
-        return ResponseEntity.ok(summonerService.getChampionUsage(region, gameName, tagLine));
+            @PathVariable String tagLine,
+            @RequestParam(defaultValue = "20") int count) {
+        return ResponseEntity.ok(summonerService.getChampionUsage(region, gameName, tagLine, count));
     }
 
     @GetMapping("/{region}/summoner-info/{gameName}/{tagLine}")
