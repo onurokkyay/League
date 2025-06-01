@@ -1,5 +1,8 @@
 package com.krawenn.lol;
 
+import lombok.Getter;
+
+@Getter
 public enum Region {
     BR1("br1", "americas"),
     EUN1("eun1", "europe"),
@@ -28,13 +31,5 @@ public enum Region {
             }
         }
         throw new IllegalArgumentException("Invalid region code: " + code);
-    }
-
-    public String getApiCode() {
-        return apiCode;
-    }
-
-    public String getAccountRoute() {
-        return accountRoute;
     }
 } 
