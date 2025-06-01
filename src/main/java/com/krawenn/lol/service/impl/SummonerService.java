@@ -6,6 +6,8 @@ import com.krawenn.lol.dto.AccountDto;
 import com.krawenn.lol.dto.MatchDto;
 import com.krawenn.lol.dto.SummonerDto;
 import com.krawenn.lol.dto.ChampionMasteryDto;
+import com.krawenn.lol.dto.ChampionDto;
+import com.krawenn.lol.dto.ParticipantDto;
 import com.krawenn.lol.service.ISummonerService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -15,6 +17,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SummonerService implements ISummonerService {
@@ -56,5 +60,48 @@ public class SummonerService implements ISummonerService {
         String url = RiotApiConstants.RIOT_CHAMPION_MASTERY_API_URL.replace("<REGION>", region.getApiCode()) + puuid + "?api_key=" + riotApiKey;
         ResponseEntity<ChampionMasteryDto[]> response = restTemplate.getForEntity(url, ChampionMasteryDto[].class);
         return Arrays.asList(response.getBody());
+    }
+
+    @Override
+    public List<ChampionDto> getChampionUsage(Region region, String gameName, String tagLine) {
+        AccountDto account = getAccountDtoByRiotId(region, gameName, tagLine);
+        String puuid = account.getPuuid();
+        List<String> matchIds = getMatchIdsByPuuid(region, puuid, 0, 20);
+
+        // Flatten all relevant participants
+        List<ParticipantDto> participants = matchIds.stream()
+            .map(matchId -> getMatchDetails(region, matchId))
+            .filter(match -> match != null && match.getInfo() != null && match.getInfo().getParticipants() != null)
+            .flatMap(match -> match.getInfo().getParticipants().stream())
+            .filter(p -> puuid.equals(p.getPuuid()))
+            .toList();
+
+        // Group by championId
+        Map<String, List<ParticipantDto>> grouped = participants.stream()
+            .collect(Collectors.groupingBy(p -> String.valueOf(p.getChampionId())));
+
+        // Map to ChampionDto and calculate stats
+        List<ChampionDto> result = grouped.entrySet().stream()
+            .map(entry -> {
+                String champId = entry.getKey();
+                List<ParticipantDto> plist = entry.getValue();
+                int count = plist.size();
+                ChampionDto dto = new ChampionDto();
+                dto.setChampionId(champId);
+                dto.setChampionName(plist.getFirst().getChampionName());
+                dto.setCount(count);
+                dto.setAvgKills(plist.stream().mapToInt(ParticipantDto::getKills).average().orElse(0));
+                dto.setAvgDeaths(plist.stream().mapToInt(ParticipantDto::getDeaths).average().orElse(0));
+                dto.setAvgAssists(plist.stream().mapToInt(ParticipantDto::getAssists).average().orElse(0));
+                dto.setAvgGold(plist.stream().mapToInt(ParticipantDto::getGoldEarned).average().orElse(0));
+                dto.setAvgDamage(plist.stream().mapToInt(ParticipantDto::getTotalDamageDealtToChampions).average().orElse(0));
+                dto.setAvgMinions(plist.stream().mapToInt(p -> p.getTotalMinionsKilled() + p.getNeutralMinionsKilled()).average().orElse(0));
+                dto.setWinRate(plist.stream().mapToInt(p -> p.isWin() ? 1 : 0).average().orElse(0));
+                return dto;
+            })
+            .sorted((a, b) -> Integer.compare(b.getCount(), a.getCount()))
+            .collect(Collectors.toList());
+
+        return result;
     }
 } 

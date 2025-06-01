@@ -10,4 +10,5 @@ public interface ISummonerService {
     AccountDto getAccountDtoByRiotId(Region region, String gameName, String tagLine);
     SummonerDto getSummonerByPuuid(Region region, String puuid);
     List<ChampionMasteryDto> getChampionMasteriesByPuuid(Region region, String puuid);
+    List<ChampionDto> getChampionUsage(Region region, String gameName, String tagLine);
 } 
