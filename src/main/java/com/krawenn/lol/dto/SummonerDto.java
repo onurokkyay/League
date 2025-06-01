@@ -1,6 +1,7 @@
 package com.krawenn.lol.dto;
 
 import lombok.Data;
+import com.krawenn.lol.RiotApiConstants;
 
 @Data
 public class SummonerDto {
@@ -12,7 +13,7 @@ public class SummonerDto {
     private long summonerLevel;
     private String profileIconUrl;
 
-    private static final String PROFILE_ICON_URL_TEMPLATE = "https://ddragon.leagueoflegends.com/cdn/15.11.1/img/profileicon/%d.png";
+    private static final String PROFILE_ICON_URL_TEMPLATE = RiotApiConstants.DDRAGON_PROFILE_ICON_URL;
 
     public void setProfileIconId(int profileIconId) {
         this.profileIconId = profileIconId;

@@ -1,6 +1,7 @@
 package com.krawenn.lol.dto;
 
 import lombok.Data;
+import com.krawenn.lol.RiotApiConstants;
 
 @Data
 public class ChampionDto {
@@ -17,16 +18,12 @@ public class ChampionDto {
 
     private Images images;
 
-    private static final String ICON_URL = "https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/%s.png";
-    private static final String SPLASH_URL = "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/%s_0.jpg";
-    private static final String LOADING_URL = "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/%s_0.jpg";
-
     public void setChampionName(String championName) {
         this.championName = championName;
         this.images = new Images(
-                String.format(ICON_URL, championName),
-                String.format(SPLASH_URL, championName),
-                String.format(LOADING_URL, championName)
+                String.format(RiotApiConstants.DDRAGON_CHAMPION_ICON_URL, championName),
+                String.format(RiotApiConstants.DDRAGON_CHAMPION_SPLASH_URL, championName),
+                String.format(RiotApiConstants.DDRAGON_CHAMPION_LOADING_URL, championName)
         );
     }
 
