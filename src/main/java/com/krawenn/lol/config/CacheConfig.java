@@ -1,4 +1,4 @@
-package com.krawenn.lol;
+package com.krawenn.lol.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;

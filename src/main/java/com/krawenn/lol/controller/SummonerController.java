@@ -1,5 +1,7 @@
-package com.krawenn.lol;
+package com.krawenn.lol.controller;
 
+import com.krawenn.lol.enums.Region;
+import com.krawenn.lol.service.impl.SummonerService;
 import com.krawenn.lol.dto.AccountDto;
 import com.krawenn.lol.dto.ChampionDto;
 import com.krawenn.lol.dto.MatchDto;

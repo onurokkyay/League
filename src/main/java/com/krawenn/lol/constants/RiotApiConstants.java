@@ -1,4 +1,4 @@
-package com.krawenn.lol;
+package com.krawenn.lol.constants;
 
 public class RiotApiConstants {
     public static final String RIOT_ACCOUNT_API_URL = "https://<REGION>.api.riotgames.com/riot/account/v1/accounts/by-riot-id/";

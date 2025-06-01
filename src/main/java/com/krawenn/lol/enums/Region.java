@@ -1,4 +1,4 @@
-package com.krawenn.lol;
+package com.krawenn.lol.enums;
 
 import lombok.Getter;
 

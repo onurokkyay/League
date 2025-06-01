@@ -1,7 +1,7 @@
 package com.krawenn.lol.dto;
 
 import lombok.Data;
-import com.krawenn.lol.RiotApiConstants;
+import com.krawenn.lol.constants.RiotApiConstants;
 
 @Data
 public class ChampionDto {

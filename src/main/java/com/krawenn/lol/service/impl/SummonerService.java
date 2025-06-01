@@ -1,9 +1,12 @@
-package com.krawenn.lol;
+package com.krawenn.lol.service.impl;
 
+import com.krawenn.lol.enums.Region;
+import com.krawenn.lol.constants.RiotApiConstants;
 import com.krawenn.lol.dto.AccountDto;
 import com.krawenn.lol.dto.MatchDto;
 import com.krawenn.lol.dto.SummonerDto;
 import com.krawenn.lol.dto.ChampionMasteryDto;
+import com.krawenn.lol.service.ISummonerService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
-public class SummonerService {
+public class SummonerService implements ISummonerService {
     @Value("${riot.api.key}")
     private String riotApiKey;
 
