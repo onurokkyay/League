@@ -1,7 +1,8 @@
 package com.krawenn.lol.dto;
 
-import java.util.List;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class MetadataDto {

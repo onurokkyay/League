@@ -21,14 +21,6 @@ public enum Region {
         this.accountRoute = accountRoute;
     }
 
-    public String getApiCode() {
-        return apiCode;
-    }
-
-    public String getAccountRoute() {
-        return accountRoute;
-    }
-
     public static Region fromString(String code) {
         for (Region region : Region.values()) {
             if (region.apiCode.equalsIgnoreCase(code)) {
@@ -36,5 +28,13 @@ public enum Region {
             }
         }
         throw new IllegalArgumentException("Invalid region code: " + code);
+    }
+
+    public String getApiCode() {
+        return apiCode;
+    }
+
+    public String getAccountRoute() {
+        return accountRoute;
     }
 } 

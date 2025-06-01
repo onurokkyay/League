@@ -24,9 +24,9 @@ public class ChampionDto {
     public void setChampionName(String championName) {
         this.championName = championName;
         this.images = new Images(
-            String.format(ICON_URL, championName),
-            String.format(SPLASH_URL, championName),
-            String.format(LOADING_URL, championName)
+                String.format(ICON_URL, championName),
+                String.format(SPLASH_URL, championName),
+                String.format(LOADING_URL, championName)
         );
     }
 
@@ -35,6 +35,7 @@ public class ChampionDto {
         private final String icon;
         private final String splash;
         private final String loading;
+
         public Images(String icon, String splash, String loading) {
             this.icon = icon;
             this.splash = splash;

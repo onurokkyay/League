@@ -1,6 +1,5 @@
 package com.krawenn.lol.dto;
 
-import java.util.List;
 import lombok.Data;
 
 @Data
