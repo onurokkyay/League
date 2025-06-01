@@ -3,6 +3,7 @@ package com.krawenn.lol;
 import com.krawenn.lol.dto.AccountDto;
 import com.krawenn.lol.dto.MatchDto;
 import com.krawenn.lol.dto.SummonerDto;
+import com.krawenn.lol.dto.ChampionMasteryDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ public class SummonerService {
     private final String RIOT_MATCH_API_URL = "https://<REGION>.api.riotgames.com/lol/match/v5/matches/by-puuid/";
     private final String RIOT_MATCH_DETAILS_API_URL = "https://<REGION>.api.riotgames.com/lol/match/v5/matches/";
     private final String RIOT_SUMMONER_BY_PUUID_API_URL = "https://<REGION>.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/";
+    private final String RIOT_CHAMPION_MASTERY_API_URL = "https://<REGION>.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/";
 
     public List<String> getMatchIdsByPuuid(Region region, String puuid, int start, int count) {
         RestTemplate restTemplate = new RestTemplate();
@@ -50,5 +52,12 @@ public class SummonerService {
         String url = RIOT_SUMMONER_BY_PUUID_API_URL.replace("<REGION>", region.getApiCode()) + puuid + "?api_key=" + riotApiKey;
         ResponseEntity<SummonerDto> response = restTemplate.getForEntity(url, SummonerDto.class);
         return response.getBody();
+    }
+
+    public List<ChampionMasteryDto> getChampionMasteriesByPuuid(Region region, String puuid) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = RIOT_CHAMPION_MASTERY_API_URL.replace("<REGION>", region.getApiCode()) + puuid + "?api_key=" + riotApiKey;
+        ResponseEntity<ChampionMasteryDto[]> response = restTemplate.getForEntity(url, ChampionMasteryDto[].class);
+        return Arrays.asList(response.getBody());
     }
 } 

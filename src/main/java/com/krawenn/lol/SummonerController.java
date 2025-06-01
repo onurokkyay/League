@@ -3,6 +3,7 @@ package com.krawenn.lol;
 import com.krawenn.lol.dto.AccountDto;
 import com.krawenn.lol.dto.ChampionDto;
 import com.krawenn.lol.dto.MatchDto;
+import com.krawenn.lol.dto.ChampionMasteryDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -89,5 +90,14 @@ public class SummonerController {
         String puuid = account.getPuuid();
         com.krawenn.lol.dto.SummonerDto summoner = summonerService.getSummonerByPuuid(region, puuid);
         return ResponseEntity.ok(summoner);
+    }
+
+    @GetMapping("/{region}/champion-mastery/by-riot-id/{gameName}/{tagLine}")
+    public ResponseEntity<List<ChampionMasteryDto>> getChampionMasteriesByRiotId(
+            @PathVariable Region region,
+            @PathVariable String gameName,
+            @PathVariable String tagLine) {
+        String puuid = summonerService.getAccountDtoByRiotId(region, gameName, tagLine).getPuuid();
+        return ResponseEntity.ok(summonerService.getChampionMasteriesByPuuid(region, puuid));
     }
 } 
