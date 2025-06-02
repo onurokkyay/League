@@ -14,6 +14,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
+import com.krawenn.lol.exception.SummonerNotFoundException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -44,8 +46,12 @@ public class SummonerService implements ISummonerService {
     public AccountDto getAccountDtoByRiotId(Region region, String gameName, String tagLine) {
         RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_ACCOUNT_API_URL.replace("<REGION>", region.getAccountRoute()) + gameName + "/" + tagLine + "?api_key=" + riotApiKey;
-        ResponseEntity<AccountDto> response = restTemplate.getForEntity(url, AccountDto.class);
-        return response.getBody();
+        try {
+            ResponseEntity<AccountDto> response = restTemplate.getForEntity(url, AccountDto.class);
+            return response.getBody();
+        } catch (HttpClientErrorException.NotFound ex) {
+            throw new SummonerNotFoundException(gameName, tagLine);
+        }
     }
 
     public SummonerDto getSummonerByPuuid(Region region, String puuid) {
