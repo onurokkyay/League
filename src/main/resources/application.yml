@@ -1,0 +1,11 @@
+resilience4j.retry:
+  instances:
+    riotGamesRetry:
+      max-attempts: 3
+      wait-duration: 2s
+      retry-exceptions:
+        - java.net.SocketTimeoutException
+        - org.springframework.web.client.ResourceAccessException
+        - org.springframework.web.client.HttpServerErrorException
+      ignore-exceptions:
+        - com.krawenn.lol.exception.RiotGamesBusinessException 

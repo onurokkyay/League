@@ -20,6 +20,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import com.krawenn.lol.exception.RiotGamesBusinessException;
 import com.krawenn.lol.exception.RiotGamesSystemException;
+import io.github.resilience4j.retry.annotation.Retry;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +32,7 @@ public class SummonerService implements ISummonerService {
     @Value("${riot.api.key}")
     private String riotApiKey;
 
+    @Retry(name = "riotGamesRetry")
     public List<String> getMatchIdsByPuuid(Region region, String puuid, int start, int count) {
         RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_MATCH_API_URL.replace("<REGION>", region.getAccountRoute()) + puuid + "/ids?start=" + start + "&count=" + count + "&api_key=" + riotApiKey;
@@ -45,6 +47,7 @@ public class SummonerService implements ISummonerService {
         }
     }
 
+    @Retry(name = "riotGamesRetry")
     @Cacheable("matchDetails")
     public MatchDto getMatchDetails(Region region, String matchId) {
         RestTemplate restTemplate = new RestTemplate();
@@ -60,6 +63,7 @@ public class SummonerService implements ISummonerService {
         }
     }
 
+    @Retry(name = "riotGamesRetry")
     @Cacheable("accountByRiotId")
     public AccountDto getAccountDtoByRiotId(Region region, String gameName, String tagLine) {
         RestTemplate restTemplate = new RestTemplate();
@@ -75,6 +79,7 @@ public class SummonerService implements ISummonerService {
         }
     }
 
+    @Retry(name = "riotGamesRetry")
     public SummonerDto getSummonerByPuuid(Region region, String puuid) {
         RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_SUMMONER_BY_PUUID_API_URL.replace("<REGION>", region.getApiCode()) + puuid + "?api_key=" + riotApiKey;
@@ -89,6 +94,7 @@ public class SummonerService implements ISummonerService {
         }
     }
 
+    @Retry(name = "riotGamesRetry")
     public List<ChampionMasteryDto> getChampionMasteriesByPuuid(Region region, String puuid) {
         RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_CHAMPION_MASTERY_API_URL.replace("<REGION>", region.getApiCode()) + puuid + "?api_key=" + riotApiKey;
