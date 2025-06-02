@@ -1,26 +1,16 @@
 package com.krawenn.lol.service.impl;
 
-import com.krawenn.lol.enums.Region;
 import com.krawenn.lol.constants.RiotApiConstants;
-import com.krawenn.lol.dto.AccountDto;
-import com.krawenn.lol.dto.MatchDto;
-import com.krawenn.lol.dto.SummonerDto;
-import com.krawenn.lol.dto.ChampionMasteryDto;
-import com.krawenn.lol.dto.ChampionDto;
-import com.krawenn.lol.dto.ParticipantDto;
+import com.krawenn.lol.dto.*;
+import com.krawenn.lol.enums.Region;
 import com.krawenn.lol.service.ISummonerService;
+import com.krawenn.lol.util.RiotApiCaller;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.ResourceAccessException;
-import com.krawenn.lol.exception.RiotGamesBusinessException;
-import com.krawenn.lol.exception.RiotGamesSystemException;
-import io.github.resilience4j.retry.annotation.Retry;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,15 +26,10 @@ public class SummonerService implements ISummonerService {
     public List<String> getMatchIdsByPuuid(Region region, String puuid, int start, int count) {
         RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_MATCH_API_URL.replace("<REGION>", region.getAccountRoute()) + puuid + "/ids?start=" + start + "&count=" + count + "&api_key=" + riotApiKey;
-        try {
+        return RiotApiCaller.execute(() -> {
             ResponseEntity<String[]> response = restTemplate.getForEntity(url, String[].class);
             return Arrays.asList(response.getBody());
-        } catch (HttpClientErrorException e) {
-            throw new RiotGamesBusinessException(e.getMessage(), HttpStatus.valueOf(e.getStatusCode().value()));
-        } catch (HttpServerErrorException | ResourceAccessException e) {
-            throw new RiotGamesSystemException(e.getMessage(),
-                e instanceof HttpServerErrorException ? HttpStatus.valueOf(((HttpServerErrorException) e).getStatusCode().value()) : HttpStatus.GATEWAY_TIMEOUT);
-        }
+        });
     }
 
     @Retry(name = "riotGamesRetry")
@@ -52,15 +37,10 @@ public class SummonerService implements ISummonerService {
     public MatchDto getMatchDetails(Region region, String matchId) {
         RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_MATCH_DETAILS_API_URL.replace("<REGION>", region.getAccountRoute()) + matchId + "?api_key=" + riotApiKey;
-        try {
+        return RiotApiCaller.execute(() -> {
             ResponseEntity<MatchDto> response = restTemplate.getForEntity(url, MatchDto.class);
             return response.getBody();
-        } catch (HttpClientErrorException e) {
-            throw new RiotGamesBusinessException(e.getMessage(), HttpStatus.valueOf(e.getStatusCode().value()));
-        } catch (HttpServerErrorException | ResourceAccessException e) {
-            throw new RiotGamesSystemException(e.getMessage(),
-                e instanceof HttpServerErrorException ? HttpStatus.valueOf(((HttpServerErrorException) e).getStatusCode().value()) : HttpStatus.GATEWAY_TIMEOUT);
-        }
+        });
     }
 
     @Retry(name = "riotGamesRetry")
@@ -68,45 +48,30 @@ public class SummonerService implements ISummonerService {
     public AccountDto getAccountDtoByRiotId(Region region, String gameName, String tagLine) {
         RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_ACCOUNT_API_URL.replace("<REGION>", region.getAccountRoute()) + gameName + "/" + tagLine + "?api_key=" + riotApiKey;
-        try {
+        return RiotApiCaller.execute(() -> {
             ResponseEntity<AccountDto> response = restTemplate.getForEntity(url, AccountDto.class);
             return response.getBody();
-        } catch (HttpClientErrorException e) {
-            throw new RiotGamesBusinessException(e.getMessage(), HttpStatus.valueOf(e.getStatusCode().value()));
-        } catch (HttpServerErrorException | ResourceAccessException e) {
-            throw new RiotGamesSystemException(e.getMessage(),
-                e instanceof HttpServerErrorException ? HttpStatus.valueOf(((HttpServerErrorException) e).getStatusCode().value()) : HttpStatus.GATEWAY_TIMEOUT);
-        }
+        });
     }
 
     @Retry(name = "riotGamesRetry")
     public SummonerDto getSummonerByPuuid(Region region, String puuid) {
         RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_SUMMONER_BY_PUUID_API_URL.replace("<REGION>", region.getApiCode()) + puuid + "?api_key=" + riotApiKey;
-        try {
+        return RiotApiCaller.execute(() -> {
             ResponseEntity<SummonerDto> response = restTemplate.getForEntity(url, SummonerDto.class);
             return response.getBody();
-        } catch (HttpClientErrorException e) {
-            throw new RiotGamesBusinessException(e.getMessage(), HttpStatus.valueOf(e.getStatusCode().value()));
-        } catch (HttpServerErrorException | ResourceAccessException e) {
-            throw new RiotGamesSystemException(e.getMessage(),
-                e instanceof HttpServerErrorException ? HttpStatus.valueOf(((HttpServerErrorException) e).getStatusCode().value()) : HttpStatus.GATEWAY_TIMEOUT);
-        }
+        });
     }
 
     @Retry(name = "riotGamesRetry")
     public List<ChampionMasteryDto> getChampionMasteriesByPuuid(Region region, String puuid) {
         RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_CHAMPION_MASTERY_API_URL.replace("<REGION>", region.getApiCode()) + puuid + "?api_key=" + riotApiKey;
-        try {
+        return RiotApiCaller.execute(() -> {
             ResponseEntity<ChampionMasteryDto[]> response = restTemplate.getForEntity(url, ChampionMasteryDto[].class);
             return Arrays.asList(response.getBody());
-        } catch (HttpClientErrorException e) {
-            throw new RiotGamesBusinessException(e.getMessage(), HttpStatus.valueOf(e.getStatusCode().value()));
-        } catch (HttpServerErrorException | ResourceAccessException e) {
-            throw new RiotGamesSystemException(e.getMessage(),
-                e instanceof HttpServerErrorException ? HttpStatus.valueOf(((HttpServerErrorException) e).getStatusCode().value()) : HttpStatus.GATEWAY_TIMEOUT);
-        }
+        });
     }
 
     @Override
