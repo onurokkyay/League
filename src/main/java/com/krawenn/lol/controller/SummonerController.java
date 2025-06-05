@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import java.util.List;
 
 @RestController
-@RequestMapping("/summoner")
+@RequestMapping("/api/league/summoner")
 public class SummonerController {
     @Autowired
     private SummonerService summonerService;
