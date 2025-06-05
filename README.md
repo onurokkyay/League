@@ -27,5 +27,9 @@ This project is a **League Service** built using **Spring Boot** that integrates
 
 ---
 
-## 🚀 **Swagger**
-http://localhost:8082/api/league/swagger-ui.html
+## 📖 **Swagger UI**
+
+You can explore the API documentation at:  
+`http://localhost:{port}/api/league/swagger-ui.html`
+
+---
