@@ -18,4 +18,8 @@ springdoc:
     url: /api/league/v3/api-docs
 
 swagger:
-  gateway-url: http://localhost:8080
+  gateway-url: ${GATEWAY_URL}
+
+riot:
+  api:
+    key: ${RIOT_API_KEY}
