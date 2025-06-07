@@ -16,3 +16,6 @@ springdoc:
   swagger-ui:
     path: /api/league/swagger-ui.html
     url: /api/league/v3/api-docs
+
+swagger:
+  gateway-url: http://localhost:8080
