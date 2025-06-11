@@ -1,25 +1,8 @@
-resilience4j.retry:
-  instances:
-    riotGamesRetry:
-      max-attempts: 3
-      wait-duration: 2s
-      retry-exceptions:
-        - java.net.SocketTimeoutException
-        - org.springframework.web.client.ResourceAccessException
-        - org.springframework.web.client.HttpServerErrorException
-      ignore-exceptions:
-        - com.krawenn.lol.exception.RiotGamesBusinessException
-
-springdoc:
-  api-docs:
-    path: /api/league/v3/api-docs
-  swagger-ui:
-    path: /api/league/swagger-ui.html
-    url: /api/league/v3/api-docs
-
-swagger:
-  gateway-url: ${GATEWAY_URL}
-
-riot:
-  api:
-    key: ${RIOT_API_KEY}
+spring:
+  config:
+    import: "configserver:"
+  cloud:
+    config:
+      uri: ${CONFIG_SERVER_URL}
+  application:
+    name: league-service
