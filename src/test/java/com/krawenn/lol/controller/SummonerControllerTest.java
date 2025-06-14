@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.krawenn.lol.dto.*;
 import com.krawenn.lol.enums.Region;
 import com.krawenn.lol.service.impl.SummonerService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SummonerController.class)
+@Import(MockSummonerServiceTestConfig.class)
 class SummonerControllerTest {
 
     @Autowired
@@ -29,7 +32,7 @@ class SummonerControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @Autowired
     private SummonerService summonerService;
 
     private static final String TEST_PUUID = "test-puuid";
@@ -128,5 +131,13 @@ class SummonerControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(objectMapper.writeValueAsString(expectedMasteries)));
+    }
+}
+
+@TestConfiguration
+class MockSummonerServiceTestConfig {
+    @Bean
+    public SummonerService summonerService() {
+        return Mockito.mock(SummonerService.class);
     }
 } 
