@@ -5,12 +5,10 @@ import com.krawenn.lol.config.MockSummonerServiceTestConfig;
 import com.krawenn.lol.dto.*;
 import com.krawenn.lol.enums.Region;
 import com.krawenn.lol.service.impl.SummonerService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,6 +41,7 @@ class SummonerControllerTest {
     private static final Region TEST_REGION = Region.EUW1;
 
     @Test
+    @DisplayName("Should return list of match IDs when getting matches by PUUID")
     void getMatchIdsByPuuid_ShouldReturnMatchIds() throws Exception {
         // Arrange
         List<String> expectedMatchIds = Arrays.asList("match1", "match2");
@@ -61,6 +60,7 @@ class SummonerControllerTest {
     }
 
     @Test
+    @DisplayName("Should return match details when getting match by ID")
     void getMatchDetails_ShouldReturnMatchDetails() throws Exception {
         // Arrange
         MatchDto expectedMatch = new MatchDto();
@@ -76,6 +76,7 @@ class SummonerControllerTest {
     }
 
     @Test
+    @DisplayName("Should return champion usage statistics when getting champion usage")
     void getChampionUsage_ShouldReturnChampionUsage() throws Exception {
         // Arrange
         List<ChampionDto> expectedChampions = Arrays.asList(new ChampionDto(), new ChampionDto());
@@ -93,6 +94,7 @@ class SummonerControllerTest {
     }
 
     @Test
+    @DisplayName("Should return summoner information when getting summoner info by Riot ID")
     void getSummonerInfo_ShouldReturnSummonerInfo() throws Exception {
         // Arrange
         AccountDto accountDto = new AccountDto();
@@ -114,6 +116,7 @@ class SummonerControllerTest {
     }
 
     @Test
+    @DisplayName("Should return champion mastery data when getting champion masteries by Riot ID")
     void getChampionMasteriesByRiotId_ShouldReturnChampionMasteries() throws Exception {
         // Arrange
         AccountDto accountDto = new AccountDto();
