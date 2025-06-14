@@ -1,6 +1,7 @@
 package com.krawenn.lol.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.krawenn.lol.config.MockSummonerServiceTestConfig;
 import com.krawenn.lol.dto.*;
 import com.krawenn.lol.enums.Region;
 import com.krawenn.lol.service.impl.SummonerService;
@@ -133,11 +134,3 @@ class SummonerControllerTest {
                 .andExpect(content().json(objectMapper.writeValueAsString(expectedMasteries)));
     }
 }
-
-@TestConfiguration
-class MockSummonerServiceTestConfig {
-    @Bean
-    public SummonerService summonerService() {
-        return Mockito.mock(SummonerService.class);
-    }
-} 
