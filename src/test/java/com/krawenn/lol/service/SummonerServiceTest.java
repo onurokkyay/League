@@ -2,17 +2,25 @@ package com.krawenn.lol.service;
 
 import com.krawenn.lol.dto.*;
 import com.krawenn.lol.enums.Region;
+import com.krawenn.lol.exception.RiotGamesBusinessException;
+import com.krawenn.lol.exception.RiotGamesSystemException;
 import com.krawenn.lol.service.impl.SummonerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -181,5 +189,139 @@ class SummonerServiceTest {
         assertEquals(15000.0, championDto.getAvgDamage());
         assertEquals(120.0, championDto.getAvgMinions());
         assertEquals(1.0, championDto.getWinRate());
+    }
+
+    @Test
+    @DisplayName("Should handle empty match IDs response")
+    void getMatchIdsByPuuid_ShouldHandleEmptyResponse() {
+        // Arrange
+        when(restTemplate.getForEntity(anyString(), eq(String[].class)))
+                .thenReturn(new ResponseEntity<>(new String[0], HttpStatus.OK));
+
+        // Act
+        List<String> result = summonerService.getMatchIdsByPuuid(TEST_REGION, TEST_PUUID, 0, 20);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should handle null match details response")
+    void getMatchDetails_ShouldHandleNullResponse() {
+        // Arrange
+        when(restTemplate.getForEntity(anyString(), eq(MatchDto.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        // Act & Assert
+        assertThrows(RiotGamesBusinessException.class, () -> 
+            summonerService.getMatchDetails(TEST_REGION, TEST_MATCH_ID)
+        );
+    }
+
+    @Test
+    @DisplayName("Should handle 404 error when getting account info")
+    void getAccountDtoByRiotId_ShouldHandle404Error() {
+        // Arrange
+        when(restTemplate.getForEntity(anyString(), eq(AccountDto.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        // Act & Assert
+        assertThrows(RiotGamesBusinessException.class, () ->
+            summonerService.getAccountDtoByRiotId(TEST_REGION, TEST_GAME_NAME, TEST_TAG_LINE)
+        );
+    }
+
+    @Test
+    @DisplayName("Should handle 500 error when getting summoner info")
+    void getSummonerByPuuid_ShouldHandle500Error() {
+        // Arrange
+        when(restTemplate.getForEntity(anyString(), eq(SummonerDto.class)))
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        // Act & Assert
+        assertThrows(RiotGamesSystemException.class, () ->
+            summonerService.getSummonerByPuuid(TEST_REGION, TEST_PUUID)
+        );
+    }
+
+    @Test
+    @DisplayName("Should handle connection timeout when getting champion masteries")
+    void getChampionMasteriesByPuuid_ShouldHandleTimeout() {
+        // Arrange
+        when(restTemplate.getForEntity(anyString(), eq(ChampionMasteryDto[].class)))
+                .thenThrow(new ResourceAccessException("Connection timeout"));
+
+        // Act & Assert
+        assertThrows(RiotGamesSystemException.class, () ->
+            summonerService.getChampionMasteriesByPuuid(TEST_REGION, TEST_PUUID)
+        );
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @DisplayName("Should handle null or empty game name when getting champion usage")
+    void getChampionUsage_ShouldHandleInvalidGameName(String gameName) {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () ->
+            summonerService.getChampionUsage(TEST_REGION, gameName, TEST_TAG_LINE, 20)
+        );
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @DisplayName("Should handle null or empty tag line when getting champion usage")
+    void getChampionUsage_ShouldHandleInvalidTagLine(String tagLine) {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () ->
+            summonerService.getChampionUsage(TEST_REGION, TEST_GAME_NAME, tagLine, 20)
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {-1, 0, 101})
+    @DisplayName("Should handle invalid count when getting champion usage")
+    void getChampionUsage_ShouldHandleInvalidCount(int count) {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () ->
+            summonerService.getChampionUsage(TEST_REGION, TEST_GAME_NAME, TEST_TAG_LINE, count)
+        );
+    }
+
+    @Test
+    @DisplayName("Should handle null region when getting match IDs")
+    void getMatchIdsByPuuid_ShouldHandleNullRegion() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () ->
+            summonerService.getMatchIdsByPuuid(null, TEST_PUUID, 0, 20)
+        );
+    }
+
+    @Test
+    @DisplayName("Should handle empty match details in champion usage calculation")
+    void getChampionUsage_ShouldHandleEmptyMatchDetails() {
+        // Arrange
+        AccountDto accountDto = new AccountDto();
+        accountDto.setPuuid(TEST_PUUID);
+        when(restTemplate.getForEntity(contains("/riot/account/v1/accounts/by-riot-id/"), eq(AccountDto.class)))
+                .thenReturn(new ResponseEntity<>(accountDto, HttpStatus.OK));
+
+        String[] matchIds = {"match1"};
+        when(restTemplate.getForEntity(contains("/matches/by-puuid/"), eq(String[].class)))
+                .thenReturn(new ResponseEntity<>(matchIds, HttpStatus.OK));
+
+        MatchDto matchDto = new MatchDto();
+        InfoDto infoDto = new InfoDto();
+        infoDto.setParticipants(List.of());
+        matchDto.setInfo(infoDto);
+        when(restTemplate.getForEntity(contains("/matches/"), eq(MatchDto.class)))
+                .thenReturn(new ResponseEntity<>(matchDto, HttpStatus.OK));
+
+        // Act
+        List<ChampionDto> result = summonerService.getChampionUsage(TEST_REGION, TEST_GAME_NAME, TEST_TAG_LINE, 20);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 } 
