@@ -9,6 +9,7 @@ import com.krawenn.lol.exception.RiotGamesSystemException;
 import com.krawenn.lol.service.impl.SummonerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,114 +48,129 @@ class SummonerServiceRetryTest {
         ReflectionTestUtils.setField(summonerService, "riotApiKey", TEST_API_KEY);
     }
 
-    @Test
-    @DisplayName("Should retry on 503 Service Unavailable and eventually succeed")
-    void getMatchIdsByPuuid_ShouldRetryOn503AndSucceed() {
-        // Arrange
-        String[] expectedMatchIds = {"match1", "match2"};
+    @Nested
+    @DisplayName("HTTP 5xx Error Retry Tests")
+    class Http5xxErrorRetryTests {
         
-        // First call fails with 503, second call succeeds
-        when(restTemplate.getForEntity(anyString(), eq(String[].class)))
-                .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE))
-                .thenReturn(new ResponseEntity<>(expectedMatchIds, HttpStatus.OK));
+        @Test
+        @DisplayName("Should retry on 503 Service Unavailable and eventually succeed")
+        void getMatchIdsByPuuid_ShouldRetryOn503AndSucceed() {
+            // Arrange
+            String[] expectedMatchIds = {"match1", "match2"};
+            
+            // First call fails with 503, second call succeeds
+            when(restTemplate.getForEntity(anyString(), eq(String[].class)))
+                    .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE))
+                    .thenReturn(new ResponseEntity<>(expectedMatchIds, HttpStatus.OK));
 
-        // Act
-        List<String> result = summonerService.getMatchIdsByPuuid(TEST_REGION, TEST_PUUID, 0, 20);
+            // Act
+            List<String> result = summonerService.getMatchIdsByPuuid(TEST_REGION, TEST_PUUID, 0, 20);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals("match1", result.get(0));
-        assertEquals("match2", result.get(1));
-        
-        // Verify that the method was called twice
-        verify(restTemplate, times(2)).getForEntity(anyString(), eq(String[].class));
+            // Assert
+            assertNotNull(result);
+            assertEquals(2, result.size());
+            assertEquals("match1", result.get(0));
+            assertEquals("match2", result.get(1));
+            
+            // Verify that the method was called twice
+            verify(restTemplate, times(2)).getForEntity(anyString(), eq(String[].class));
+        }
+
+        @Test
+        @DisplayName("Should retry on 502 Bad Gateway and eventually succeed")
+        void getAccountDtoByRiotId_ShouldRetryOn502AndSucceed() {
+            // Arrange
+            AccountDto expectedAccount = new AccountDto();
+            expectedAccount.setPuuid(TEST_PUUID);
+            
+            // First call fails with 502, second call succeeds
+            when(restTemplate.getForEntity(anyString(), eq(AccountDto.class)))
+                    .thenThrow(new HttpServerErrorException(HttpStatus.BAD_GATEWAY))
+                    .thenReturn(new ResponseEntity<>(expectedAccount, HttpStatus.OK));
+
+            // Act
+            AccountDto result = summonerService.getAccountDtoByRiotId(TEST_REGION, TEST_GAME_NAME, TEST_TAG_LINE);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(TEST_PUUID, result.getPuuid());
+            
+            // Verify that the method was called twice
+            verify(restTemplate, times(2)).getForEntity(anyString(), eq(AccountDto.class));
+        }
+
+        @Test
+        @DisplayName("Should retry on 504 Gateway Timeout and eventually succeed")
+        void getChampionMasteriesByPuuid_ShouldRetryOn504AndSucceed() {
+            // Arrange
+            ChampionMasteryDto[] expectedMasteries = {
+                new ChampionMasteryDto(),
+                new ChampionMasteryDto()
+            };
+            
+            // First call fails with 504, second call succeeds
+            when(restTemplate.getForEntity(anyString(), eq(ChampionMasteryDto[].class)))
+                    .thenThrow(new HttpServerErrorException(HttpStatus.GATEWAY_TIMEOUT))
+                    .thenReturn(new ResponseEntity<>(expectedMasteries, HttpStatus.OK));
+
+            // Act
+            List<ChampionMasteryDto> result = summonerService.getChampionMasteriesByPuuid(TEST_REGION, TEST_PUUID);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(2, result.size());
+            
+            // Verify that the method was called twice
+            verify(restTemplate, times(2)).getForEntity(anyString(), eq(ChampionMasteryDto[].class));
+        }
     }
 
-    @Test
-    @DisplayName("Should retry on connection timeout and eventually succeed")
-    void getMatchDetails_ShouldRetryOnTimeoutAndSucceed() {
-        // Arrange
-        MatchDto expectedMatch = new MatchDto();
+    @Nested
+    @DisplayName("Connection Error Retry Tests")
+    class ConnectionErrorRetryTests {
         
-        // First call fails with timeout, second call succeeds
-        when(restTemplate.getForEntity(anyString(), eq(MatchDto.class)))
-                .thenThrow(new ResourceAccessException("Connection timeout"))
-                .thenReturn(new ResponseEntity<>(expectedMatch, HttpStatus.OK));
+        @Test
+        @DisplayName("Should retry on connection timeout and eventually succeed")
+        void getMatchDetails_ShouldRetryOnTimeoutAndSucceed() {
+            // Arrange
+            MatchDto expectedMatch = new MatchDto();
+            
+            // First call fails with timeout, second call succeeds
+            when(restTemplate.getForEntity(anyString(), eq(MatchDto.class)))
+                    .thenThrow(new ResourceAccessException("Connection timeout"))
+                    .thenReturn(new ResponseEntity<>(expectedMatch, HttpStatus.OK));
 
-        // Act
-        MatchDto result = summonerService.getMatchDetails(TEST_REGION, TEST_MATCH_ID);
+            // Act
+            MatchDto result = summonerService.getMatchDetails(TEST_REGION, TEST_MATCH_ID);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(expectedMatch, result);
-        
-        // Verify that the method was called twice
-        verify(restTemplate, times(2)).getForEntity(anyString(), eq(MatchDto.class));
+            // Assert
+            assertNotNull(result);
+            assertEquals(expectedMatch, result);
+            
+            // Verify that the method was called twice
+            verify(restTemplate, times(2)).getForEntity(anyString(), eq(MatchDto.class));
+        }
     }
 
-    @Test
-    @DisplayName("Should retry on 502 Bad Gateway and eventually succeed")
-    void getAccountDtoByRiotId_ShouldRetryOn502AndSucceed() {
-        // Arrange
-        AccountDto expectedAccount = new AccountDto();
-        expectedAccount.setPuuid(TEST_PUUID);
+    @Nested
+    @DisplayName("Max Retries Tests")
+    class MaxRetriesTests {
         
-        // First call fails with 502, second call succeeds
-        when(restTemplate.getForEntity(anyString(), eq(AccountDto.class)))
-                .thenThrow(new HttpServerErrorException(HttpStatus.BAD_GATEWAY))
-                .thenReturn(new ResponseEntity<>(expectedAccount, HttpStatus.OK));
+        @Test
+        @DisplayName("Should throw exception after max retries exceeded")
+        void getSummonerByPuuid_ShouldThrowExceptionAfterMaxRetries() {
+            // Arrange
+            // Simulate multiple 503 errors
+            when(restTemplate.getForEntity(anyString(), eq(SummonerDto.class)))
+                    .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE));
 
-        // Act
-        AccountDto result = summonerService.getAccountDtoByRiotId(TEST_REGION, TEST_GAME_NAME, TEST_TAG_LINE);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(TEST_PUUID, result.getPuuid());
-        
-        // Verify that the method was called twice
-        verify(restTemplate, times(2)).getForEntity(anyString(), eq(AccountDto.class));
-    }
-
-    @Test
-    @DisplayName("Should throw exception after max retries exceeded")
-    void getSummonerByPuuid_ShouldThrowExceptionAfterMaxRetries() {
-        // Arrange
-        // Simulate multiple 503 errors
-        when(restTemplate.getForEntity(anyString(), eq(SummonerDto.class)))
-                .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE));
-
-        // Act & Assert
-        assertThrows(RiotGamesSystemException.class, () ->
-            summonerService.getSummonerByPuuid(TEST_REGION, TEST_PUUID)
-        );
-        
-        // Verify that the method was called multiple times (default max retries)
-        verify(restTemplate, atLeast(3)).getForEntity(anyString(), eq(SummonerDto.class));
-    }
-
-    @Test
-    @DisplayName("Should retry on 504 Gateway Timeout and eventually succeed")
-    void getChampionMasteriesByPuuid_ShouldRetryOn504AndSucceed() {
-        // Arrange
-        ChampionMasteryDto[] expectedMasteries = {
-            new ChampionMasteryDto(),
-            new ChampionMasteryDto()
-        };
-        
-        // First call fails with 504, second call succeeds
-        when(restTemplate.getForEntity(anyString(), eq(ChampionMasteryDto[].class)))
-                .thenThrow(new HttpServerErrorException(HttpStatus.GATEWAY_TIMEOUT))
-                .thenReturn(new ResponseEntity<>(expectedMasteries, HttpStatus.OK));
-
-        // Act
-        List<ChampionMasteryDto> result = summonerService.getChampionMasteriesByPuuid(TEST_REGION, TEST_PUUID);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        
-        // Verify that the method was called twice
-        verify(restTemplate, times(2)).getForEntity(anyString(), eq(ChampionMasteryDto[].class));
+            // Act & Assert
+            assertThrows(RiotGamesSystemException.class, () ->
+                summonerService.getSummonerByPuuid(TEST_REGION, TEST_PUUID)
+            );
+            
+            // Verify that the method was called multiple times (default max retries)
+            verify(restTemplate, atLeast(3)).getForEntity(anyString(), eq(SummonerDto.class));
+        }
     }
 } 
