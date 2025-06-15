@@ -48,6 +48,24 @@ class SummonerServiceRetryTest {
         ReflectionTestUtils.setField(summonerService, "riotApiKey", TEST_API_KEY);
     }
 
+    // Helper methods for common test patterns
+    private <T> void mockRetryWithHttpError(Class<T> responseType, T successResponse, HttpStatus errorStatus) {
+        when(restTemplate.getForEntity(anyString(), eq(responseType)))
+                .thenThrow(new HttpServerErrorException(errorStatus))
+                .thenReturn(new ResponseEntity<>(successResponse, HttpStatus.OK));
+    }
+
+    private <T> void mockRetryWithTimeout(Class<T> responseType, T successResponse) {
+        when(restTemplate.getForEntity(anyString(), eq(responseType)))
+                .thenThrow(new ResourceAccessException("Connection timeout"))
+                .thenReturn(new ResponseEntity<>(successResponse, HttpStatus.OK));
+    }
+
+    private <T> void mockContinuousHttpError(Class<T> responseType, HttpStatus errorStatus) {
+        when(restTemplate.getForEntity(anyString(), eq(responseType)))
+                .thenThrow(new HttpServerErrorException(errorStatus));
+    }
+
     @Nested
     @DisplayName("HTTP 5xx Error Retry Tests")
     class Http5xxErrorRetryTests {
@@ -57,11 +75,7 @@ class SummonerServiceRetryTest {
         void getMatchIdsByPuuid_ShouldRetryOn503AndSucceed() {
             // Arrange
             String[] expectedMatchIds = {"match1", "match2"};
-            
-            // First call fails with 503, second call succeeds
-            when(restTemplate.getForEntity(anyString(), eq(String[].class)))
-                    .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE))
-                    .thenReturn(new ResponseEntity<>(expectedMatchIds, HttpStatus.OK));
+            mockRetryWithHttpError(String[].class, expectedMatchIds, HttpStatus.SERVICE_UNAVAILABLE);
 
             // Act
             List<String> result = summonerService.getMatchIdsByPuuid(TEST_REGION, TEST_PUUID, 0, 20);
@@ -82,11 +96,7 @@ class SummonerServiceRetryTest {
             // Arrange
             AccountDto expectedAccount = new AccountDto();
             expectedAccount.setPuuid(TEST_PUUID);
-            
-            // First call fails with 502, second call succeeds
-            when(restTemplate.getForEntity(anyString(), eq(AccountDto.class)))
-                    .thenThrow(new HttpServerErrorException(HttpStatus.BAD_GATEWAY))
-                    .thenReturn(new ResponseEntity<>(expectedAccount, HttpStatus.OK));
+            mockRetryWithHttpError(AccountDto.class, expectedAccount, HttpStatus.BAD_GATEWAY);
 
             // Act
             AccountDto result = summonerService.getAccountDtoByRiotId(TEST_REGION, TEST_GAME_NAME, TEST_TAG_LINE);
@@ -107,11 +117,7 @@ class SummonerServiceRetryTest {
                 new ChampionMasteryDto(),
                 new ChampionMasteryDto()
             };
-            
-            // First call fails with 504, second call succeeds
-            when(restTemplate.getForEntity(anyString(), eq(ChampionMasteryDto[].class)))
-                    .thenThrow(new HttpServerErrorException(HttpStatus.GATEWAY_TIMEOUT))
-                    .thenReturn(new ResponseEntity<>(expectedMasteries, HttpStatus.OK));
+            mockRetryWithHttpError(ChampionMasteryDto[].class, expectedMasteries, HttpStatus.GATEWAY_TIMEOUT);
 
             // Act
             List<ChampionMasteryDto> result = summonerService.getChampionMasteriesByPuuid(TEST_REGION, TEST_PUUID);
@@ -134,11 +140,7 @@ class SummonerServiceRetryTest {
         void getMatchDetails_ShouldRetryOnTimeoutAndSucceed() {
             // Arrange
             MatchDto expectedMatch = new MatchDto();
-            
-            // First call fails with timeout, second call succeeds
-            when(restTemplate.getForEntity(anyString(), eq(MatchDto.class)))
-                    .thenThrow(new ResourceAccessException("Connection timeout"))
-                    .thenReturn(new ResponseEntity<>(expectedMatch, HttpStatus.OK));
+            mockRetryWithTimeout(MatchDto.class, expectedMatch);
 
             // Act
             MatchDto result = summonerService.getMatchDetails(TEST_REGION, TEST_MATCH_ID);
@@ -160,9 +162,7 @@ class SummonerServiceRetryTest {
         @DisplayName("Should throw exception after max retries exceeded")
         void getSummonerByPuuid_ShouldThrowExceptionAfterMaxRetries() {
             // Arrange
-            // Simulate multiple 503 errors
-            when(restTemplate.getForEntity(anyString(), eq(SummonerDto.class)))
-                    .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE));
+            mockContinuousHttpError(SummonerDto.class, HttpStatus.SERVICE_UNAVAILABLE);
 
             // Act & Assert
             assertThrows(RiotGamesSystemException.class, () ->
