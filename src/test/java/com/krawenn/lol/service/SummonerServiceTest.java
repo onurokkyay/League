@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -160,7 +159,7 @@ class SummonerServiceTest {
         participant.setTotalMinionsKilled(100);
         participant.setNeutralMinionsKilled(20);
         participant.setWin(true);
-        infoDto.setParticipants(Arrays.asList(participant));
+        infoDto.setParticipants(List.of(participant));
         matchDto.setInfo(infoDto);
         when(restTemplate.getForEntity(contains("/matches/"), eq(MatchDto.class)))
                 .thenReturn(new ResponseEntity<>(matchDto, HttpStatus.OK));
@@ -171,7 +170,7 @@ class SummonerServiceTest {
         // Assert
         assertNotNull(result);
         assertFalse(result.isEmpty());
-        ChampionDto championDto = result.get(0);
+        ChampionDto championDto = result.getFirst();
         assertEquals("1", championDto.getChampionId());
         assertEquals("TestChampion", championDto.getChampionName());
         assertEquals(2, championDto.getCount());
