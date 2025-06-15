@@ -6,6 +6,7 @@ import com.krawenn.lol.enums.Region;
 import com.krawenn.lol.service.ISummonerService;
 import com.krawenn.lol.util.RiotApiCaller;
 import io.github.resilience4j.retry.annotation.Retry;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
@@ -19,12 +20,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class SummonerService implements ISummonerService {
+    
+    @Autowired
+    private RestTemplate restTemplate;
+    
     @Value("${riot.api.key}")
     private String riotApiKey;
 
     @Retry(name = "riotGamesRetry")
     public List<String> getMatchIdsByPuuid(Region region, String puuid, int start, int count) {
-        RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_MATCH_API_URL.replace("<REGION>", region.getAccountRoute()) + puuid + "/ids?start=" + start + "&count=" + count + "&api_key=" + riotApiKey;
         return RiotApiCaller.execute(() -> {
             ResponseEntity<String[]> response = restTemplate.getForEntity(url, String[].class);
@@ -35,7 +39,6 @@ public class SummonerService implements ISummonerService {
     @Retry(name = "riotGamesRetry")
     @Cacheable("matchDetails")
     public MatchDto getMatchDetails(Region region, String matchId) {
-        RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_MATCH_DETAILS_API_URL.replace("<REGION>", region.getAccountRoute()) + matchId + "?api_key=" + riotApiKey;
         return RiotApiCaller.execute(() -> {
             ResponseEntity<MatchDto> response = restTemplate.getForEntity(url, MatchDto.class);
@@ -46,7 +49,6 @@ public class SummonerService implements ISummonerService {
     @Retry(name = "riotGamesRetry")
     @Cacheable("accountByRiotId")
     public AccountDto getAccountDtoByRiotId(Region region, String gameName, String tagLine) {
-        RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_ACCOUNT_API_URL.replace("<REGION>", region.getAccountRoute()) + gameName + "/" + tagLine + "?api_key=" + riotApiKey;
         return RiotApiCaller.execute(() -> {
             ResponseEntity<AccountDto> response = restTemplate.getForEntity(url, AccountDto.class);
@@ -56,7 +58,6 @@ public class SummonerService implements ISummonerService {
 
     @Retry(name = "riotGamesRetry")
     public SummonerDto getSummonerByPuuid(Region region, String puuid) {
-        RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_SUMMONER_BY_PUUID_API_URL.replace("<REGION>", region.getApiCode()) + puuid + "?api_key=" + riotApiKey;
         return RiotApiCaller.execute(() -> {
             ResponseEntity<SummonerDto> response = restTemplate.getForEntity(url, SummonerDto.class);
@@ -66,7 +67,6 @@ public class SummonerService implements ISummonerService {
 
     @Retry(name = "riotGamesRetry")
     public List<ChampionMasteryDto> getChampionMasteriesByPuuid(Region region, String puuid) {
-        RestTemplate restTemplate = new RestTemplate();
         String url = RiotApiConstants.RIOT_CHAMPION_MASTERY_API_URL.replace("<REGION>", region.getApiCode()) + puuid + "?api_key=" + riotApiKey;
         return RiotApiCaller.execute(() -> {
             ResponseEntity<ChampionMasteryDto[]> response = restTemplate.getForEntity(url, ChampionMasteryDto[].class);
